@@ -51,27 +51,19 @@ function ScrollTop() {
 const Layout = ({ createAppTheme }) => {
   const [mode, setMode] = useState(() => {
     const savedMode = localStorage.getItem('themeMode');
-    return savedMode || 'dark';
+    return savedMode === 'light' ? 'light' : 'amoled';
   });
-  const [themeMenuAnchor, setThemeMenuAnchor] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('themeMode', mode);
+    // Add a class to the body for global transition effects
+    document.body.style.transition = 'background-color 0.3s ease-in-out';
   }, [mode]);
 
   const theme = React.useMemo(() => createAppTheme(mode), [createAppTheme, mode]);
 
-  const handleThemeMenuOpen = (event) => {
-    setThemeMenuAnchor(event.currentTarget);
-  };
-
-  const handleThemeMenuClose = () => {
-    setThemeMenuAnchor(null);
-  };
-
-  const handleThemeChange = (newMode) => {
-    setMode(newMode);
-    handleThemeMenuClose();
+  const toggleTheme = () => {
+    setMode(prev => prev === 'light' ? 'amoled' : 'light');
   };
 
   return (
@@ -81,7 +73,8 @@ const Layout = ({ createAppTheme }) => {
         display: 'flex', 
         flexDirection: 'column',
         minHeight: '100vh',
-        transition: 'all 0.3s ease-in-out',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        bgcolor: 'background.default',
       }}>
         <Header />
         <Box 
@@ -89,7 +82,8 @@ const Layout = ({ createAppTheme }) => {
           sx={{ 
             flexGrow: 1,
             pt: { xs: 7, sm: 8, md: 9 },
-            transition: 'all 0.3s ease-in-out',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            bgcolor: 'background.default',
           }}
         >
           <Outlet />
@@ -104,52 +98,35 @@ const Layout = ({ createAppTheme }) => {
           }}
         >
           <IconButton
-            onClick={handleThemeMenuOpen}
+            onClick={toggleTheme}
             color="inherit"
             sx={{
               bgcolor: 'background.paper',
+              width: 40,
+              height: 40,
               '&:hover': {
                 bgcolor: 'background.paper',
-                opacity: 0.9,
-                transform: 'scale(1.1)',
+                transform: 'scale(1.1) rotate(180deg)',
               },
-              transition: 'all 0.2s ease-in-out',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            {mode === 'light' ? <Brightness7 /> : mode === 'dark' ? <Brightness4 /> : <DarkMode />}
+            {mode === 'light' ? (
+              <Brightness7 
+                sx={{ 
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: 'rotate(0deg)',
+                }} 
+              />
+            ) : (
+              <DarkMode 
+                sx={{ 
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: 'rotate(360deg)',
+                }} 
+              />
+            )}
           </IconButton>
-          <Menu
-            anchorEl={themeMenuAnchor}
-            open={Boolean(themeMenuAnchor)}
-            onClose={handleThemeMenuClose}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'center',
-            }}
-            transformOrigin={{
-              vertical: 'bottom',
-              horizontal: 'center',
-            }}
-          >
-            <MenuItem 
-              onClick={() => handleThemeChange('light')}
-              selected={mode === 'light'}
-            >
-              <Brightness7 sx={{ mr: 1 }} /> Light
-            </MenuItem>
-            <MenuItem 
-              onClick={() => handleThemeChange('dark')}
-              selected={mode === 'dark'}
-            >
-              <Brightness4 sx={{ mr: 1 }} /> Dark
-            </MenuItem>
-            <MenuItem 
-              onClick={() => handleThemeChange('amoled')}
-              selected={mode === 'amoled'}
-            >
-              <DarkMode sx={{ mr: 1 }} /> AMOLED Dark
-            </MenuItem>
-          </Menu>
         </Box>
         <ScrollTop />
       </Box>

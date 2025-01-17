@@ -7,6 +7,7 @@ import WatchPage from './pages/watch/watch';
 import TrendingPage from './pages/trending/trending';
 import SeasonalPage from './pages/seasonal/seasonal';
 import MyList from './pages/MyList';
+import AnimeDetails from './pages/AnimeDetails';
 
 const createAppTheme = (mode) => {
   const isAmoled = mode === 'amoled';
@@ -130,6 +131,7 @@ function App() {
           <Route path="trending" element={<TrendingPage />} />
           <Route path="seasonal" element={<SeasonalPage />} />
           <Route path="my-list" element={<MyList />} />
+          <Route path="anime/:id" element={<AnimeDetails />} />
         </Route>
       </Routes>
     </Router>

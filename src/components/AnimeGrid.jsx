@@ -1,282 +1,251 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Rating, Skeleton, IconButton, Chip, CircularProgress, Alert } from '@mui/material';
-import { Favorite, FavoriteBorder, Star, PlayArrow } from '@mui/icons-material';
+import React, { useState } from 'react';
+import { Box, Typography, Grid, Card, CardActionArea, CardMedia, Rating, Skeleton, Chip } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { animeService } from '../services/animeService';
+import { useTheme } from '@mui/material/styles';
+import { useSpring, animated, config } from '@react-spring/web';
+import LoadingAnimation from './LoadingAnimation';
 
-export default function AnimeGrid({ 
-  animes: propAnimes = [], 
-  title = 'Top Anime', 
-  showTitle = true,
-  loading = false,
-  titleVariant = 'h4',
-  showChip = true,
-  gridSpacing = 3,
-  cardHeight = 270,
-  error = null
-}) {
-  const [animes, setAnimes] = useState([]);
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('favorites');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [loadedImages, setLoadedImages] = useState({});
+const AnimatedCard = animated(Card);
 
-  useEffect(() => {
-    if (Array.isArray(propAnimes)) {
-      setAnimes(propAnimes);
-    }
-  }, [propAnimes]);
-
-  useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }, [favorites]);
-
-  const handleImageLoad = (animeId) => {
-    setLoadedImages(prev => ({ ...prev, [animeId]: true }));
-  };
-
-  const toggleFavorite = (animeId, event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    setFavorites(prev => {
-      const isFavorite = prev.includes(animeId);
-      if (isFavorite) {
-        return prev.filter(id => id !== animeId);
-      } else {
-        return [...prev, animeId];
-      }
-    });
-  };
-
-  const LoadingSkeleton = () => (
+const LoadingSkeleton = ({ cardHeight, gridSpacing }) => (
+  <Box sx={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    py: 4
+  }}>
+    <LoadingAnimation size={80} />
     <Grid container spacing={gridSpacing}>
       {[...Array(12)].map((_, index) => (
         <Grid item key={index} xs={6} sm={4} md={3} lg={2}>
-          <Card 
-            elevation={0}
-            sx={{ 
-              height: '100%',
-              bgcolor: 'transparent',
-              position: 'relative',
+          <Skeleton
+            variant="rectangular"
+            height={cardHeight}
+            sx={{
+              borderRadius: 2,
+              bgcolor: theme => theme.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.1)'
+                : 'rgba(0,0,0,0.1)',
             }}
-          >
-            <Box sx={{ position: 'relative' }}>
-              <Skeleton 
-                variant="rectangular" 
-                height={cardHeight}
-                sx={{ 
-                  borderRadius: 2,
-                  transform: 'scale(1)',
-                  bgcolor: 'rgba(255,255,255,0.1)',
-                }}
-              />
-              <Box 
-                sx={{ 
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <CircularProgress size={40} sx={{ color: 'primary.main' }} />
-              </Box>
-            </Box>
-            <Box sx={{ pt: 2 }}>
-              <Skeleton variant="text" height={24} width="80%" sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
-              <Skeleton variant="text" height={20} width="50%" sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
-            </Box>
-          </Card>
+            animation="wave"
+          />
         </Grid>
       ))}
     </Grid>
-  );
+  </Box>
+);
 
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mb: 4 }}>
-        {error}
-      </Alert>
-    );
-  }
+const AnimeCard = ({ anime, index, cardHeight }) => {
+  const theme = useTheme();
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Fade in animation when card appears
+  const fadeIn = useSpring({
+    from: { opacity: 0, transform: 'translateY(20px)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
+    delay: index * 100,
+    config: config.gentle,
+  });
+
+  // Hover animation
+  const hoverAnimation = useSpring({
+    transform: isHovered ? 'scale(1.03)' : 'scale(1)',
+    boxShadow: isHovered ? theme.shadows[8] : theme.shadows[1],
+    config: config.gentle,
+  });
+
+  // Image loading fade
+  const imageAnimation = useSpring({
+    opacity: isLoaded ? 1 : 0,
+    config: config.gentle,
+  });
+
+  return (
+    <AnimatedCard
+      style={{ ...fadeIn, ...hoverAnimation }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      sx={{
+        height: cardHeight,
+        bgcolor: 'background.paper',
+        borderRadius: 2,
+        overflow: 'hidden',
+      }}
+    >
+      <CardActionArea
+        component={Link}
+        to={`/anime/${anime.mal_id}`}
+        sx={{ height: '100%' }}
+      >
+        <Box sx={{
+          position: 'relative',
+          paddingTop: '140%',
+          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+        }}>
+          {!isLoaded && (
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+              <LoadingAnimation size={40} />
+            </Box>
+          )}
+          <animated.div style={imageAnimation}>
+            <CardMedia
+              component="img"
+              image={anime.images?.jpg?.large_image_url}
+              alt={anime.title}
+              loading="lazy"
+              onLoad={() => setIsLoaded(true)}
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          </animated.div>
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%)',
+              p: 1.5,
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: 'white',
+                fontWeight: 600,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                mb: 0.5,
+                fontSize: '0.875rem',
+                lineHeight: 1.2,
+              }}
+            >
+              {anime.title}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Rating
+                value={anime.score / 2}
+                precision={0.5}
+                size="small"
+                readOnly
+                sx={{
+                  color: 'primary.main',
+                  '& .MuiRating-icon': {
+                    fontSize: '0.875rem',
+                  }
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'white',
+                  fontWeight: 500,
+                }}
+              >
+                {anime.score}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </CardActionArea>
+    </AnimatedCard>
+  );
+};
+
+export default function AnimeGrid({
+  animes,
+  loading,
+  error,
+  title,
+  showTitle = true,
+  titleVariant = "h4",
+  showChip = true,
+  gridSpacing = 2,
+  cardHeight = 280
+}) {
+  const theme = useTheme();
+
+  // Title fade in animation
+  const [titleSpring] = useSpring(() => ({
+    from: { opacity: 0, transform: 'translateY(10px)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
+    config: config.gentle,
+  }), []);
 
   return (
     <Box>
       {showTitle && title && (
-        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant={titleVariant} component="h2" sx={{ 
-            color: 'text.primary',
-            fontWeight: 700,
-          }}>
-            {title}
-          </Typography>
-          {showChip && (
-            <Chip 
-              icon={<Star sx={{ color: '#FFD700 !important' }} />}
-              label="Popular"
-              sx={{ 
-                bgcolor: 'background.paper',
-                '& .MuiChip-label': { color: 'text.primary', fontWeight: 500 },
+        <animated.div style={titleSpring}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              mb: 3,
+            }}
+          >
+            <Typography
+              variant={titleVariant}
+              component="h2"
+              sx={{
+                fontWeight: 700,
+                color: theme.palette.text.primary,
               }}
-            />
-          )}
-        </Box>
+            >
+              {title}
+            </Typography>
+            {showChip && (
+              <Chip
+                label="Popular"
+                size="small"
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  fontWeight: 500,
+                }}
+              />
+            )}
+          </Box>
+        </animated.div>
       )}
-      {loading ? (
-        <LoadingSkeleton />
+
+      {error ? (
+        <Box sx={{
+          p: 4,
+          textAlign: 'center',
+          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'error.main',
+        }}>
+          <Typography color="error" variant="h6" gutterBottom>
+            {error}
+          </Typography>
+          <Typography color="text.secondary">
+            Please try again later
+          </Typography>
+        </Box>
+      ) : loading ? (
+        <LoadingSkeleton cardHeight={cardHeight} gridSpacing={gridSpacing} />
       ) : (
         <Grid container spacing={gridSpacing}>
-          {animes && animes.map((anime) => (
+          {animes.map((anime, index) => (
             <Grid item key={anime.mal_id} xs={6} sm={4} md={3} lg={2}>
-              <Card 
-                elevation={0}
-                sx={{ 
-                  height: '100%',
-                  bgcolor: 'transparent',
-                  position: 'relative',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: loadedImages[anime.mal_id] ? 'translateY(0)' : 'translateY(20px)',
-                  opacity: loadedImages[anime.mal_id] ? 1 : 0,
-                  '&:hover': {
-                    transform: loadedImages[anime.mal_id] ? 'translateY(-5px) scale(1.02)' : 'translateY(20px)',
-                    '& .MuiCardActionArea-focusHighlight': {
-                      opacity: 0.1,
-                    },
-                    '& .play-button': {
-                      opacity: 1,
-                      transform: 'translate(-50%, -50%) scale(1.1)',
-                    },
-                  },
-                }}
-              >
-                <CardActionArea 
-                  component={Link} 
-                  to={`/anime/${anime.mal_id}`}
-                  sx={{ 
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    position: 'relative',
-                  }}
-                >
-                  <Box sx={{ position: 'relative' }}>
-                    {!loadedImages[anime.mal_id] && (
-                      <Box 
-                        sx={{ 
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          zIndex: 1,
-                        }}
-                      >
-                        <CircularProgress size={40} sx={{ color: 'primary.main' }} />
-                      </Box>
-                    )}
-                    <CardMedia
-                      component="img"
-                      image={anime.images.jpg.large_image_url}
-                      alt={anime.title}
-                      onLoad={() => handleImageLoad(anime.mal_id)}
-                      sx={{
-                        height: cardHeight,
-                        objectFit: 'cover',
-                        opacity: loadedImages[anime.mal_id] ? 1 : 0.5,
-                        transition: 'opacity 0.3s ease-in-out',
-                      }}
-                    />
-                  </Box>
-                  <Box 
-                    className="play-button"
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%) scale(0.9)',
-                      opacity: 0,
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      bgcolor: 'rgba(0,0,0,0.7)',
-                      borderRadius: '50%',
-                      p: 1,
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                    }}
-                  >
-                    <PlayArrow sx={{ fontSize: 40, color: 'white' }} />
-                  </Box>
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-                      p: 2,
-                      transition: 'opacity 0.3s ease-in-out',
-                      opacity: loadedImages[anime.mal_id] ? 1 : 0,
-                    }}
-                  >
-                    <Typography 
-                      variant="subtitle1"
-                      component="h3"
-                      noWrap
-                      sx={{ 
-                        color: 'white',
-                        fontWeight: 600,
-                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                      }}
-                    >
-                      {anime.title}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Rating 
-                        value={anime.score / 2} 
-                        precision={0.5} 
-                        readOnly 
-                        size="small"
-                        sx={{
-                          color: 'primary.main',
-                          '& .MuiRating-iconEmpty': {
-                            color: 'rgba(255, 255, 255, 0.3)',
-                          },
-                        }}
-                      />
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: 'white',
-                          fontWeight: 500,
-                          opacity: 0.8,
-                        }}
-                      >
-                        {anime.score}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardActionArea>
-                <IconButton
-                  size="small"
-                  onClick={(e) => toggleFavorite(anime.mal_id, e)}
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(4px)',
-                    opacity: loadedImages[anime.mal_id] ? 1 : 0,
-                    transition: 'all 0.3s ease-in-out',
-                    '&:hover': { 
-                      bgcolor: 'rgba(0,0,0,0.7)',
-                      transform: 'scale(1.1)',
-                    },
-                    zIndex: 2,
-                  }}
-                >
-                  {favorites.includes(anime.mal_id) ? (
-                    <Favorite sx={{ fontSize: 18, color: 'primary.main' }} />
-                  ) : (
-                    <FavoriteBorder sx={{ fontSize: 18, color: 'white' }} />
-                  )}
-                </IconButton>
-              </Card>
+              <AnimeCard
+                anime={anime}
+                index={index}
+                cardHeight={cardHeight}
+              />
             </Grid>
           ))}
         </Grid>

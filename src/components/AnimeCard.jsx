@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardActionArea, CardContent, CardMedia, Typography, Box, Rating, Chip } from '@mui/material';
-import { PlayArrow, Star } from '@mui/icons-material';
+import { Card, CardActionArea, Typography, Box, Rating, Chip, CardMedia } from '@mui/material';
+import { Star, AccessTime } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const AnimeCard = ({ anime }) => {
@@ -14,7 +14,12 @@ const AnimeCard = ({ anime }) => {
         flexDirection: 'column',
         position: 'relative',
         overflow: 'hidden',
+        bgcolor: 'background.paper',
+        borderRadius: 2,
+        transition: 'all 0.3s ease-in-out',
         '&:hover': {
+          transform: 'translateY(-8px)',
+          boxShadow: (theme) => `0 8px 24px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)'}`,
           '& .MuiCardMedia-root': {
             transform: 'scale(1.1)',
           },
@@ -25,7 +30,7 @@ const AnimeCard = ({ anime }) => {
       }}
     >
       <CardActionArea 
-        onClick={() => navigate(`/watch/${anime.mal_id}`)}
+        onClick={() => navigate(`/anime/${anime.mal_id}`)}
         sx={{ height: '100%' }}
       >
         <Box sx={{ position: 'relative', paddingTop: '140%' }}>
@@ -50,21 +55,20 @@ const AnimeCard = ({ anime }) => {
               right: 0,
               bottom: 0,
               background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               opacity: 0,
               transition: 'opacity 0.3s ease-in-out',
             }}
-          >
-            <PlayArrow sx={{ fontSize: 60, color: 'white' }} />
-          </Box>
+          />
           <Box
             sx={{
               position: 'absolute',
               top: 8,
               left: 8,
+              right: 8,
               zIndex: 1,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
             }}
           >
             {anime.rank && (
@@ -75,7 +79,20 @@ const AnimeCard = ({ anime }) => {
                 sx={{
                   bgcolor: 'rgba(0, 0, 0, 0.7)',
                   color: 'white',
-                  mb: 1,
+                  backdropFilter: 'blur(4px)',
+                  '& .MuiChip-label': { fontWeight: 600 },
+                }}
+              />
+            )}
+            {anime.episodes && (
+              <Chip
+                icon={<AccessTime sx={{ color: 'white !important' }} />}
+                label={`${anime.episodes} EP`}
+                size="small"
+                sx={{
+                  bgcolor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  backdropFilter: 'blur(4px)',
                   '& .MuiChip-label': { fontWeight: 600 },
                 }}
               />
@@ -88,7 +105,7 @@ const AnimeCard = ({ anime }) => {
               left: 0,
               right: 0,
               p: 2,
-              background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
               zIndex: 1,
             }}
           >
@@ -103,17 +120,24 @@ const AnimeCard = ({ anime }) => {
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
+                minHeight: '2.5em',
+                mb: 1,
               }}
             >
               {anime.title}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Rating
                 value={anime.score / 2}
                 precision={0.5}
                 size="small"
                 readOnly
-                sx={{ color: 'primary.main' }}
+                sx={{ 
+                  color: 'primary.main',
+                  '& .MuiRating-icon': {
+                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                  },
+                }}
               />
               <Typography
                 variant="body2"

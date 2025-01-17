@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, LinearProgress, CircularProgress, Typography, useTheme } from '@mui/material';
+import { Box, LinearProgress, Typography, useTheme } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import Hero from '../../components/Hero';
 import Categories from '../../components/Categories';
@@ -16,22 +16,30 @@ export default function Home() {
   const [searchParams] = useSearchParams();
   const theme = useTheme();
   const searchQuery = searchParams.get('q');
+  const selectedGenre = searchParams.get('genre');
 
   useEffect(() => {
     const fetchAnime = async () => {
       try {
         setLoading(true);
         setError(null);
-        const [trending, top] = await Promise.all([
-          animeService.getTopAnime(),
-          animeService.getTopAnime()
-        ]);
-        
-        if (Array.isArray(trending)) {
-          setTrendingAnime(trending);
-        }
-        if (Array.isArray(top)) {
-          setTopAnime(top);
+
+        if (selectedGenre) {
+          const genreResults = await animeService.searchAnime(`genre:${selectedGenre}`);
+          setTrendingAnime(genreResults);
+          setTopAnime(genreResults);
+        } else {
+          const [trending, top] = await Promise.all([
+            animeService.getTopAnime(),
+            animeService.getTopAnime()
+          ]);
+
+          if (Array.isArray(trending)) {
+            setTrendingAnime(trending);
+          }
+          if (Array.isArray(top)) {
+            setTopAnime(top);
+          }
         }
       } catch (error) {
         console.error('Error fetching anime:', error);
@@ -42,7 +50,7 @@ export default function Home() {
     };
 
     fetchAnime();
-  }, []);
+  }, [selectedGenre]);
 
   useEffect(() => {
     const performSearch = async () => {
@@ -66,70 +74,70 @@ export default function Home() {
   }, [searchQuery]);
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       width: '100%',
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'dark' ? '#1a1a1a' : '#f8f8f8',
+      bgcolor: theme => theme.palette.mode === 'dark' ? '#000000' : '#f8f8f8',
       position: 'relative',
       mt: { xs: '-56px', sm: '-64px' }, // Offset for header height
     }}>
       {(loading || searching) && (
-        <LinearProgress 
-          sx={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
+        <LinearProgress
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
             zIndex: 9999,
             height: '3px',
             '& .MuiLinearProgress-bar': {
               background: 'linear-gradient(90deg, #FF6B6B, #4ECDC4)',
             }
-          }} 
+          }}
         />
       )}
-      
+
       {!searchQuery && <Hero />}
-      
-      <Box 
-        sx={{ 
+
+      <Box
+        sx={{
           position: 'relative',
-          mt: searchQuery ? 8 : { xs: -10, sm: -15, md: -20 }, // Adjust margin if searching
+          mt: searchQuery ? 12 : { xs: -5, sm: -8, md: -10 },
           pt: { xs: 4, sm: 6, md: 8 },
           pb: 4,
-          background: theme => 
-            theme.palette.mode === 'dark' 
-              ? searchQuery 
+          background: theme =>
+            theme.palette.mode === 'dark'
+              ? searchQuery
                 ? 'none'
-                : 'linear-gradient(180deg, transparent 0%, rgba(26,26,26,0.8) 20%, #1a1a1a 100%)'
+                : 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 20%, #000000 100%)'
               : searchQuery
                 ? 'none'
                 : 'linear-gradient(180deg, transparent 0%, rgba(248,248,248,0.8) 20%, #f8f8f8 100%)',
           zIndex: 2,
-          backdropFilter: !searchQuery ? 'blur(10px)' : 'none',
         }}
       >
         {!searchQuery && <Categories />}
-        
-        <Box sx={{ 
+
+        <Box sx={{
           maxWidth: '1800px',
           mx: 'auto',
           px: { xs: 2, sm: 3, md: 4 },
+          mt: !searchQuery ? 4 : 0,
         }}>
           {searchQuery ? (
             <Box sx={{ py: 4 }}>
-              <Typography 
-                variant="h4" 
-                component="h1" 
-                sx={{ 
-                  mb: 4, 
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{
+                  mb: 4,
                   color: theme.palette.text.primary,
                   fontWeight: 700,
                 }}
               >
                 Search Results for "{searchQuery}"
               </Typography>
-              <AnimeGrid 
+              <AnimeGrid
                 animes={searchResults}
                 loading={searching}
                 showTitle={false}
@@ -141,8 +149,8 @@ export default function Home() {
           ) : (
             <>
               <Box sx={{ py: 4 }}>
-                <AnimeGrid 
-                  title="Trending Now" 
+                <AnimeGrid
+                  title={selectedGenre ? "Category Results" : "Trending Now"}
                   showTitle={true}
                   animes={trendingAnime}
                   loading={loading}
@@ -153,20 +161,22 @@ export default function Home() {
                   error={error}
                 />
               </Box>
-              
-              <Box sx={{ py: 4 }}>
-                <AnimeGrid 
-                  title="Popular Anime" 
-                  showTitle={true}
-                  animes={topAnime}
-                  loading={loading}
-                  titleVariant="h5"
-                  showChip={false}
-                  gridSpacing={2}
-                  cardHeight={340}
-                  error={error}
-                />
-              </Box>
+
+              {!selectedGenre && (
+                <Box sx={{ py: 4 }}>
+                  <AnimeGrid
+                    title="Popular Anime"
+                    showTitle={true}
+                    animes={topAnime}
+                    loading={loading}
+                    titleVariant="h5"
+                    showChip={false}
+                    gridSpacing={2}
+                    cardHeight={340}
+                    error={error}
+                  />
+                </Box>
+              )}
             </>
           )}
         </Box>
