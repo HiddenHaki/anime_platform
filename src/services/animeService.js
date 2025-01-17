@@ -11,25 +11,49 @@ const handleResponse = async (response) => {
     return null;
   }
   const data = await response.json();
-  return data.data;
+  return data.data || [];
 };
 
 export const animeService = {
   // Get latest anime news
   async getLatestNews(page = 1) {
     try {
+      // First try to get anime news
       const response = await fetch(`${BASE_URL}/anime/news?page=${page}`);
-      const data = await handleResponse(response);
-      if (!data) {
-        // If rate limited, try once more
-        await delay(1000);
-        const retryResponse = await fetch(`${BASE_URL}/anime/news?page=${page}`);
-        return await handleResponse(retryResponse);
+      let data = await handleResponse(response);
+      
+      if (!data || data.length === 0) {
+        // If anime news fails or returns empty, try getting top anime news
+        await delay(1000); // Wait before making another request
+        const topResponse = await fetch(`${BASE_URL}/top/anime/${page}/news`);
+        data = await handleResponse(topResponse);
+        
+        if (!data || data.length === 0) {
+          // If both fail, try getting recent anime news
+          await delay(1000);
+          const recentResponse = await fetch(`${BASE_URL}/news/anime?page=${page}`);
+          data = await handleResponse(recentResponse);
+        }
       }
-      return data;
+      
+      // Transform the data to match our NewsCard component expectations
+      return (data || []).map(item => ({
+        ...item,
+        images: {
+          jpg: {
+            image_url: item.images?.jpg?.image_url || 'https://via.placeholder.com/640x360?text=No+Image'
+          }
+        },
+        title: item.title || 'Untitled News',
+        excerpt: item.excerpt || item.content || 'No content available',
+        author_username: item.author_username || item.author || 'Anonymous',
+        date: item.date || item.created_at || new Date().toISOString(),
+        url: item.url || item.forum_url || '#',
+        forum_url: item.forum_url || item.url || '#'
+      }));
     } catch (error) {
       console.error('Error fetching anime news:', error);
-      throw error;
+      throw new Error('Failed to fetch news. Please try again later.');
     }
   },
 
