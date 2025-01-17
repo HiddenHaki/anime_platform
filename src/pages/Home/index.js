@@ -1,187 +1,320 @@
 import React, { useState, useEffect } from 'react';
-import { Box, LinearProgress, Typography, useTheme } from '@mui/material';
-import { useSearchParams } from 'react-router-dom';
-import Hero from '../../components/Hero';
-import Categories from '../../components/Categories';
-import AnimeGrid from '../../components/AnimeGrid';
+import { Link } from 'react-router-dom';
+import { 
+  Container,
+  Grid,
+  Typography,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  useTheme,
+} from '@mui/material';
+import {
+  TrendingUp, 
+  CalendarMonth,
+  NewReleases,
+  ArrowForward,
+} from '@mui/icons-material';
 import { animeService } from '../../services/animeService';
 
-export default function Home() {
-  const [trendingAnime, setTrendingAnime] = useState([]);
-  const [topAnime, setTopAnime] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState(null);
-  const [searchParams] = useSearchParams();
+const Home = () => {
   const theme = useTheme();
-  const searchQuery = searchParams.get('q');
-  const selectedGenre = searchParams.get('genre');
+  const [topAiring, setTopAiring] = useState([]);
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAnime = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        if (selectedGenre) {
-          const genreResults = await animeService.searchAnime(`genre:${selectedGenre}`);
-          setTrendingAnime(genreResults);
-          setTopAnime(genreResults);
-        } else {
-          const [trending, top] = await Promise.all([
-            animeService.getTopAnime(),
-            animeService.getTopAnime()
-          ]);
-
-          if (Array.isArray(trending)) {
-            setTrendingAnime(trending);
-          }
-          if (Array.isArray(top)) {
-            setTopAnime(top);
-          }
-        }
+        const [airingData, newsData] = await Promise.all([
+          animeService.getTopAiring(),
+          animeService.getLatestNews(),
+        ]);
+        setTopAiring(airingData.slice(0, 6));
+        setNews(newsData.slice(0, 3));
       } catch (error) {
-        console.error('Error fetching anime:', error);
-        setError('Failed to load anime data');
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnime();
-  }, [selectedGenre]);
+    fetchData();
+  }, []);
 
-  useEffect(() => {
-    const performSearch = async () => {
-      if (!searchQuery) {
-        setSearchResults([]);
-        return;
-      }
+  const features = [
+    {
+      icon: <TrendingUp />,
+      title: 'Trending Anime',
+      description: 'Discover what\'s popular this season',
+      link: '/trending',
+    },
+    {
+      icon: <CalendarMonth />,
+      title: 'Seasonal Schedule',
+      description: 'Stay updated with new episodes',
+      link: '/seasonal',
+    },
+    {
+      icon: <NewReleases />,
+      title: 'Latest News',
+      description: 'Keep up with anime announcements',
+      link: '/news',
+    },
+  ];
 
-      try {
-        setSearching(true);
-        const results = await animeService.searchAnime(searchQuery);
-        setSearchResults(Array.isArray(results) ? results : []);
-      } catch (error) {
-        console.error('Error searching anime:', error);
-      } finally {
-        setSearching(false);
-      }
-    };
-
-    performSearch();
-  }, [searchQuery]);
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '80vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{
-      width: '100%',
-      minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'dark' ? '#000000' : '#f8f8f8',
-      position: 'relative',
-      mt: { xs: '-56px', sm: '-64px' }, // Offset for header height
-    }}>
-      {(loading || searching) && (
-        <LinearProgress
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 9999,
-            height: '3px',
-            '& .MuiLinearProgress-bar': {
-              background: 'linear-gradient(90deg, #FF6B6B, #4ECDC4)',
-            }
-          }}
-        />
-      )}
-
-      {!searchQuery && <Hero />}
-
+    <Box>
+      {/* Hero Section */}
       <Box
         sx={{
           position: 'relative',
-          mt: searchQuery ? 12 : { xs: -5, sm: -8, md: -10 },
-          pt: { xs: 4, sm: 6, md: 8 },
-          pb: 4,
-          background: theme =>
-            theme.palette.mode === 'dark'
-              ? searchQuery
-                ? 'none'
-                : 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 20%, #000000 100%)'
-              : searchQuery
-                ? 'none'
-                : 'linear-gradient(180deg, transparent 0%, rgba(248,248,248,0.8) 20%, #f8f8f8 100%)',
-          zIndex: 2,
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          pt: { xs: 6, md: 12 },
+          pb: { xs: 8, md: 16 },
+          overflow: 'hidden',
         }}
       >
-        {!searchQuery && <Categories />}
-
-        <Box sx={{
-          maxWidth: '1800px',
-          mx: 'auto',
-          px: { xs: 2, sm: 3, md: 4 },
-          mt: !searchQuery ? 4 : 0,
-        }}>
-          {searchQuery ? (
-            <Box sx={{ py: 4 }}>
-              <Typography
-                variant="h4"
-                component="h1"
+        <Container maxWidth="lg">
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <Box
                 sx={{
-                  mb: 4,
-                  color: theme.palette.text.primary,
-                  fontWeight: 700,
+                  textAlign: { xs: 'center', md: 'left' },
+                  maxWidth: 500,
+                  mx: { xs: 'auto', md: 0 },
                 }}
               >
-                Search Results for "{searchQuery}"
-              </Typography>
-              <AnimeGrid
-                animes={searchResults}
-                loading={searching}
-                showTitle={false}
-                gridSpacing={2}
-                cardHeight={340}
-                error={error}
-              />
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ py: 4 }}>
-                <AnimeGrid
-                  title={selectedGenre ? "Category Results" : "Trending Now"}
-                  showTitle={true}
-                  animes={trendingAnime}
-                  loading={loading}
-                  titleVariant="h5"
-                  showChip={false}
-                  gridSpacing={2}
-                  cardHeight={340}
-                  error={error}
-                />
-              </Box>
-
-              {!selectedGenre && (
-                <Box sx={{ py: 4 }}>
-                  <AnimeGrid
-                    title="Popular Anime"
-                    showTitle={true}
-                    animes={topAnime}
-                    loading={loading}
-                    titleVariant="h5"
-                    showChip={false}
-                    gridSpacing={2}
-                    cardHeight={340}
-                    error={error}
-                  />
+                <Typography
+                  variant="h2"
+                  component="h1"
+                  sx={{
+                    mb: 3,
+                    fontWeight: 800,
+                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  Your Ultimate Anime Information Hub
+                </Typography>
+                <Typography
+                  variant="h6"
+                  color="text.secondary"
+                  sx={{ mb: 4, lineHeight: 1.6 }}
+                >
+                  Stay updated with the latest anime news, trending shows, and seasonal releases.
+                  Your one-stop destination for everything anime.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'center', md: 'flex-start' } }}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    component={Link}
+                    to="/trending"
+                    sx={{
+                      borderRadius: '50px',
+                      px: 4,
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                    }}
+                  >
+                    Explore Now
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    component={Link}
+                    to="/news"
+                    sx={{
+                      borderRadius: '50px',
+                      px: 4,
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                    }}
+                  >
+                    Latest News
+                  </Button>
                 </Box>
-              )}
-            </>
-          )}
-        </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: 2,
+                  maxWidth: 600,
+                  mx: 'auto',
+                }}
+              >
+                {topAiring.slice(0, 4).map((anime, index) => (
+                  <Box
+                    key={anime.mal_id}
+                    component={Link}
+                    to={`/anime/${anime.mal_id}`}
+                    sx={{
+                      position: 'relative',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      transform: `translateY(${index % 2 ? '20px' : '0'})`,
+                      transition: 'transform 0.3s ease-in-out',
+                      '&:hover': {
+                        transform: `translateY(${index % 2 ? '10px' : '-10px'})`,
+                      },
+                    }}
+                  >
+                    <img
+                      src={anime.images.jpg.large_image_url}
+                      alt={anime.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        aspectRatio: '3/4',
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Features Section */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Grid container spacing={4}>
+          {features.map((feature) => (
+            <Grid item xs={12} md={4} key={feature.title}>
+              <Card
+                component={Link}
+                to={feature.link}
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  textDecoration: 'none',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                  },
+                }}
+              >
+                <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 4 }}>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      p: 2,
+                      borderRadius: '50%',
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      mb: 2,
+                    }}
+                  >
+                    {feature.icon}
+                  </Box>
+                  <Typography
+                    variant="h5"
+                    component="h3"
+                    color="text.primary"
+                    gutterBottom
+                  >
+                    {feature.title}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {feature.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* Latest News Section */}
+      <Box sx={{ bgcolor: 'background.paper', py: 8 }}>
+        <Container maxWidth="lg">
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography variant="h4" component="h2" fontWeight="bold">
+              Latest News
+            </Typography>
+            <Button
+              component={Link}
+              to="/news"
+              endIcon={<ArrowForward />}
+              sx={{ textTransform: 'none' }}
+            >
+              View All
+            </Button>
+          </Box>
+          <Grid container spacing={4}>
+            {news.map((item) => (
+              <Grid item xs={12} md={4} key={item.mal_id}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={item.images.jpg.image_url}
+                    alt={item.title}
+                  />
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography
+                      variant="h6"
+                      component="h3"
+                      gutterBottom
+                      className="line-clamp-2"
+                    >
+                      {item.title}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      className="line-clamp-3"
+                    >
+                      {item.excerpt}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
       </Box>
     </Box>
   );
-}
+};
+
+export default Home;
 

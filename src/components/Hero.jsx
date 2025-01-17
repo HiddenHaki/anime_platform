@@ -1,90 +1,54 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Container, Typography, Button, Skeleton, Rating, Chip, IconButton } from '@mui/material';
-import { PlayArrow, Info, Star, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Typography, Button, useTheme } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { animeService } from '../services/animeService';
 
-const ROTATION_INTERVAL = 8000; // 8 seconds
+const wallpapers = [
+  'https://cdn.myanimelist.net/images/anime/1208/94745l.jpg', // Demon Slayer
+  'https://cdn.myanimelist.net/images/anime/1286/99889l.jpg', // Jujutsu Kaisen
+  'https://cdn.myanimelist.net/images/anime/1337/99013l.jpg', // Attack on Titan
+  'https://cdn.myanimelist.net/images/anime/1974/121052l.jpg', // Chainsaw Man
+  'https://cdn.myanimelist.net/images/anime/1441/122795l.jpg', // Spy x Family
+];
 
-export default function Hero() {
-  const [featuredAnimes, setFeaturedAnimes] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const navigate = useNavigate();
+const Hero = () => {
+  const theme = useTheme();
+  const [currentWallpaper, setCurrentWallpaper] = useState(0);
+  const [topAnime, setTopAnime] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchAnimes = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await animeService.getTopAnime();
-      // Get top 5 animes for rotation and enhance their image quality
-      const enhancedAnimes = data.slice(0, 5).map(anime => ({
-        ...anime,
-        images: {
-          ...anime.images,
-          jpg: {
-            ...anime.images.jpg,
-            large_image_url: anime.images.jpg.large_image_url.replace('/large_', '/4k_') // Try to get 4K version
-          }
+  useEffect(() => {
+    const fetchTopAnime = async () => {
+      try {
+        const data = await animeService.getTopAiring(1);
+        if (data && data.length > 0) {
+          setTopAnime(data[0]);
         }
-      }));
-      setFeaturedAnimes(enhancedAnimes);
-    } catch (error) {
-      console.error('Error fetching featured anime:', error);
-    } finally {
-      setLoading(false);
-    }
+      } catch (error) {
+        console.error('Error fetching top anime:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTopAnime();
   }, []);
 
   useEffect(() => {
-    fetchAnimes();
-  }, [fetchAnimes]);
+    const interval = setInterval(() => {
+      setCurrentWallpaper((prev) => (prev + 1) % wallpapers.length);
+    }, 5000);
 
-  useEffect(() => {
-    let interval;
-    if (isAutoPlaying && featuredAnimes.length > 0) {
-      interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % featuredAnimes.length);
-      }, ROTATION_INTERVAL);
-    }
     return () => clearInterval(interval);
-  }, [isAutoPlaying, featuredAnimes.length]);
-
-  const handleNext = () => {
-    setIsAutoPlaying(false);
-    setCurrentIndex((prev) => (prev + 1) % featuredAnimes.length);
-  };
-
-  const handlePrev = () => {
-    setIsAutoPlaying(false);
-    setCurrentIndex((prev) => (prev - 1 + featuredAnimes.length) % featuredAnimes.length);
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ height: '90vh', bgcolor: 'background.paper' }}>
-        <Skeleton 
-          variant="rectangular" 
-          height="100%" 
-          animation="wave"
-          sx={{
-            transform: 'scale(1)',
-            transformOrigin: 'top',
-          }}
-        />
-      </Box>
-    );
-  }
-
-  if (!featuredAnimes.length) return null;
-
-  const featuredAnime = featuredAnimes[currentIndex];
+  }, []);
 
   return (
     <Box
       sx={{
         position: 'relative',
-        height: '90vh',
+        height: { xs: '80vh', md: '85vh' },
+        minHeight: { xs: '500px', md: '600px' },
+        overflow: 'hidden',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -92,12 +56,11 @@ export default function Hero() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: `url(${featuredAnime.images.jpg.large_image_url})`,
+          backgroundImage: `url(${wallpapers[currentWallpaper]})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          filter: 'brightness(0.5)',
-          zIndex: 0,
-          transition: 'all 0.5s ease-in-out',
+          transition: 'opacity 1s ease-in-out',
+          animation: 'zoomEffect 20s infinite alternate',
         },
         '&::after': {
           content: '""',
@@ -106,52 +69,37 @@ export default function Hero() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%)',
-          zIndex: 1,
+          background: theme.palette.mode === 'light'
+            ? 'linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)'
+            : 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%)',
+          backdropFilter: 'blur(10px)',
+        },
+        '@keyframes zoomEffect': {
+          '0%': {
+            transform: 'scale(1)',
+          },
+          '100%': {
+            transform: 'scale(1.1)',
+          },
         },
       }}
     >
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
+      <Container
+        maxWidth="lg"
+        sx={{
           height: '100%',
-          display: 'flex',
-          alignItems: 'center',
           position: 'relative',
-          zIndex: 2,
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          pt: 8,
         }}
       >
-        {/* Navigation Arrows */}
-        <IconButton
-          onClick={handlePrev}
+        <Box
           sx={{
-            position: 'absolute',
-            left: { xs: 8, md: -64 },
-            color: 'white',
-            bgcolor: 'rgba(0,0,0,0.5)',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-          }}
-        >
-          <KeyboardArrowLeft />
-        </IconButton>
-        <IconButton
-          onClick={handleNext}
-          sx={{
-            position: 'absolute',
-            right: { xs: 8, md: -64 },
-            color: 'white',
-            bgcolor: 'rgba(0,0,0,0.5)',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-          }}
-        >
-          <KeyboardArrowRight />
-        </IconButton>
-
-        <Box 
-          sx={{ 
-            maxWidth: { xs: '100%', md: '60%' },
-            p: { xs: 3, md: 0 },
-            animation: 'fadeInUp 1s ease-out',
+            maxWidth: 'md',
+            animation: 'fadeInUp 0.5s ease-out',
             '@keyframes fadeInUp': {
               from: {
                 opacity: 0,
@@ -164,115 +112,120 @@ export default function Hero() {
             },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <Chip 
-              icon={<Star sx={{ color: '#FFD700 !important' }} />}
-              label={`#${featuredAnime.rank} Top Anime`}
-              sx={{ 
-                bgcolor: 'rgba(255, 255, 255, 0.1)',
-                color: 'common.white',
-                '& .MuiChip-label': { fontWeight: 600 },
-              }}
-            />
-            <Rating 
-              value={featuredAnime.score / 2} 
-              precision={0.5} 
-              readOnly 
-              sx={{ color: 'primary.main' }}
-            />
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'common.white',
-                fontWeight: 600,
-              }}
-            >
-              {featuredAnime.score}
-            </Typography>
-          </Box>
           <Typography
             variant="h1"
             sx={{
-              color: 'common.white',
+              fontSize: { xs: '2.5rem', md: '3.5rem' },
               fontWeight: 800,
               mb: 2,
-              fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
-              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              lineHeight: 1.2,
+              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: theme.palette.mode === 'light'
+                ? '0 2px 4px rgba(0,0,0,0.1)'
+                : '0 2px 4px rgba(0,0,0,0.5)',
             }}
           >
-            {featuredAnime.title}
+            Discover Your Next Anime Adventure
           </Typography>
+
           <Typography
-            variant="h6"
+            variant="h5"
+            color="text.secondary"
             sx={{
-              color: 'common.white',
-              mb: 3,
-              opacity: 0.9,
-              fontWeight: 500,
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-            }}
-          >
-            {featuredAnime.title_japanese}
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'common.white',
               mb: 4,
-              opacity: 0.8,
-              maxWidth: '90%',
-              display: '-webkit-box',
-              overflow: 'hidden',
-              WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 3,
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              maxWidth: '600px',
               lineHeight: 1.6,
             }}
           >
-            {featuredAnime.synopsis}
+            Stay updated with the latest anime news, trending shows, and upcoming releases.
+            Your ultimate destination for everything anime.
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+
+          {!isLoading && topAnime && (
+            <Box
+              sx={{
+                mb: 4,
+                p: 3,
+                borderRadius: 2,
+                bgcolor: 'background.glass',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
+              >
+                Currently Trending
+              </Typography>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                {topAnime.title}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  mb: 2,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {topAnime.synopsis}
+              </Typography>
+              <Button
+                component={Link}
+                to={`/anime/${topAnime.mal_id}`}
+                variant="contained"
+                color="primary"
+                sx={{
+                  borderRadius: '100px',
+                  px: 3,
+                }}
+              >
+                Learn More
+              </Button>
+            </Box>
+          )}
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
+              component={Link}
+              to="/trending"
               variant="contained"
               size="large"
-              startIcon={<PlayArrow />}
-              onClick={() => navigate(`/watch/${featuredAnime.mal_id}`)}
               sx={{
-                bgcolor: 'primary.main',
-                color: 'common.white',
+                borderRadius: '100px',
                 px: 4,
                 py: 1.5,
-                '&:hover': {
-                  bgcolor: 'primary.dark',
-                },
+                fontSize: '1.1rem',
               }}
             >
-              Watch Now
+              Explore Now
             </Button>
             <Button
+              component={Link}
+              to="/news"
               variant="outlined"
               size="large"
-              startIcon={<Info />}
-              onClick={() => navigate(`/anime/${featuredAnime.mal_id}`)}
               sx={{
-                color: 'common.white',
-                borderColor: 'rgba(255,255,255,0.5)',
+                borderRadius: '100px',
                 px: 4,
                 py: 1.5,
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  color: 'primary.main',
-                  bgcolor: 'rgba(255,255,255,0.05)',
-                },
+                fontSize: '1.1rem',
               }}
             >
-              More Info
+              Latest News
             </Button>
           </Box>
         </Box>
       </Container>
     </Box>
   );
-}
+};
+
+export default Hero;
 

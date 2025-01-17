@@ -1,29 +1,26 @@
 import React from 'react';
-import { Box, Container, Grid, Typography, Link, IconButton, useTheme, Stack } from '@mui/material';
-import { GitHub, Twitter, LinkedIn } from '@mui/icons-material';
+import { Box, Container, Grid, Typography, IconButton, Link } from '@mui/material';
+import {
+  GitHub as GitHubIcon,
+  Twitter as TwitterIcon,
+  LinkedIn as LinkedInIcon,
+  Instagram as InstagramIcon,
+} from '@mui/icons-material';
+import { Link as RouterLink } from 'react-router-dom';
 
 const Footer = () => {
-  const theme = useTheme();
-  const currentYear = new Date().getFullYear();
-
-  const footerLinks = {
-    'Explore': [
+  const navigation = {
+    main: [
       { name: 'Home', href: '/' },
+      { name: 'News', href: '/news' },
       { name: 'Trending', href: '/trending' },
       { name: 'Seasonal', href: '/seasonal' },
-      { name: 'My List', href: '/my-list' },
     ],
-    'Categories': [
-      { name: 'Action', href: '/?genre=1' },
-      { name: 'Romance', href: '/?genre=22' },
-      { name: 'Comedy', href: '/?genre=4' },
-      { name: 'Drama', href: '/?genre=8' },
-    ],
-    'Support': [
-      { name: 'Help Center', href: '#' },
-      { name: 'Terms of Service', href: '#' },
-      { name: 'Privacy Policy', href: '#' },
-      { name: 'Contact Us', href: '#' },
+    social: [
+      { name: 'GitHub', icon: GitHubIcon, href: 'https://github.com' },
+      { name: 'Twitter', icon: TwitterIcon, href: 'https://twitter.com' },
+      { name: 'LinkedIn', icon: LinkedInIcon, href: 'https://linkedin.com' },
+      { name: 'Instagram', icon: InstagramIcon, href: 'https://instagram.com' },
     ],
   };
 
@@ -31,143 +28,123 @@ const Footer = () => {
     <Box
       component="footer"
       sx={{
-        bgcolor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-        borderTop: `1px solid ${theme.palette.divider}`,
-        py: { xs: 4, md: 6 },
+        py: 6,
+        px: 2,
         mt: 'auto',
+        backgroundColor: 'background.paper',
       }}
     >
       <Container maxWidth="lg">
-        <Grid container spacing={4}>
-          {/* Logo and Description */}
+        <Grid container spacing={4} justifyContent="space-between">
           <Grid item xs={12} md={4}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to="/"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
                 fontWeight: 700,
                 mb: 2,
-                color: theme.palette.text.primary,
+                display: 'block',
               }}
             >
-              AnimeStream
+              AnimeInfo
             </Typography>
-            <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               color="text.secondary"
-              sx={{ 
-                maxWidth: 300,
-                mb: { xs: 3, md: 4 },
-                lineHeight: 1.6,
-              }}
+              sx={{ maxWidth: 300 }}
             >
-              Your ultimate destination for streaming anime. Discover the latest shows, trending series, and timeless classics.
+              Your ultimate source for anime information, news, and updates.
+              Stay connected with the latest in anime culture.
             </Typography>
-            <Stack 
-              direction="row" 
-              spacing={1}
-              sx={{ 
-                mb: { xs: 4, md: 0 },
-              }}
-            >
-              <IconButton
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  color: theme.palette.text.secondary,
-                  '&:hover': {
-                    color: theme.palette.primary.main,
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.2s ease-in-out',
-                }}
-              >
-                <GitHub />
-              </IconButton>
-              <IconButton
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  color: theme.palette.text.secondary,
-                  '&:hover': {
-                    color: theme.palette.primary.main,
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.2s ease-in-out',
-                }}
-              >
-                <Twitter />
-              </IconButton>
-              <IconButton
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  color: theme.palette.text.secondary,
-                  '&:hover': {
-                    color: theme.palette.primary.main,
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.2s ease-in-out',
-                }}
-              >
-                <LinkedIn />
-              </IconButton>
-            </Stack>
           </Grid>
-
-          {/* Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <Grid item xs={6} sm={4} md={2} key={title}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: theme.palette.text.primary,
-                  fontWeight: 600,
-                  mb: 2,
-                }}
-              >
-                {title}
-              </Typography>
-              <Stack spacing={1.5}>
-                {links.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    variant="body2"
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6" color="text.primary" gutterBottom>
+              Quick Links
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {navigation.main.map((item) => (
+                <Link
+                  key={item.name}
+                  component={RouterLink}
+                  to={item.href}
+                  color="text.secondary"
+                  sx={{
+                    textDecoration: 'none',
+                    '&:hover': { color: 'primary.main' },
+                  }}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6" color="text.primary" gutterBottom>
+              Connect With Us
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {navigation.social.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <IconButton
+                    key={item.name}
+                    component="a"
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     sx={{
-                      color: theme.palette.text.secondary,
-                      textDecoration: 'none',
+                      color: 'text.secondary',
                       '&:hover': {
-                        color: theme.palette.primary.main,
-                        transform: 'translateX(4px)',
+                        color: 'primary.main',
+                        transform: 'translateY(-2px)',
                       },
-                      transition: 'all 0.2s ease-in-out',
-                      display: 'inline-block',
+                      transition: 'all 0.2s',
                     }}
                   >
-                    {link.name}
-                  </Link>
-                ))}
-              </Stack>
-            </Grid>
-          ))}
+                    <Icon />
+                  </IconButton>
+                );
+              })}
+            </Box>
+          </Grid>
         </Grid>
-
-        {/* Copyright */}
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
+        <Box
           sx={{
-            mt: { xs: 4, md: 6 },
-            pt: 3,
-            borderTop: `1px solid ${theme.palette.divider}`,
+            mt: 4,
+            pt: 2,
+            borderTop: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
           }}
         >
-          © {currentYear} AnimeStream. All rights reserved.
-        </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mr: 2 }}
+          >
+            © {new Date().getFullYear()} AnimeInfo. All rights reserved.
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              '& a': {
+                color: 'text.secondary',
+                textDecoration: 'none',
+                '&:hover': { color: 'primary.main' },
+              },
+            }}
+          >
+            <Link href="#">Privacy Policy</Link>
+            <Link href="#">Terms of Service</Link>
+          </Box>
+        </Box>
       </Container>
     </Box>
   );
