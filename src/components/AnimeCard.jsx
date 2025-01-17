@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardActionArea, Typography, Box, Rating, Chip, CardMedia } from '@mui/material';
+import { Card, CardActionArea, Typography, Box, Rating, Chip, alpha } from '@mui/material';
 import { Star, AccessTime } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,12 +15,14 @@ const AnimeCard = ({ anime }) => {
         position: 'relative',
         overflow: 'hidden',
         bgcolor: 'background.paper',
-        borderRadius: 2,
-        transition: 'all 0.3s ease-in-out',
+        borderRadius: 3,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: '1px solid',
+        borderColor: (theme) => alpha(theme.palette.divider, 0.1),
         '&:hover': {
           transform: 'translateY(-8px)',
-          boxShadow: (theme) => `0 8px 24px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)'}`,
-          '& .MuiCardMedia-root': {
+          boxShadow: (theme) => `0 24px 48px ${alpha(theme.palette.common.black, 0.2)}`,
+          '& .anime-image': {
             transform: 'scale(1.1)',
           },
           '& .overlay': {
@@ -34,16 +36,19 @@ const AnimeCard = ({ anime }) => {
         sx={{ height: '100%' }}
       >
         <Box sx={{ position: 'relative', paddingTop: '140%' }}>
-          <CardMedia
+          <Box
             component="img"
-            image={anime.images.jpg.large_image_url}
+            src={anime.images.jpg.large_image_url}
             alt={anime.title}
+            className="anime-image"
             sx={{
               position: 'absolute',
               top: 0,
               left: 0,
+              width: '100%',
               height: '100%',
-              transition: 'transform 0.3s ease-in-out',
+              objectFit: 'cover',
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           />
           <Box
@@ -55,32 +60,34 @@ const AnimeCard = ({ anime }) => {
               right: 0,
               bottom: 0,
               background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%)',
-              opacity: 0,
+              opacity: 0.8,
               transition: 'opacity 0.3s ease-in-out',
             }}
           />
+
           <Box
             sx={{
               position: 'absolute',
-              top: 8,
-              left: 8,
-              right: 8,
-              zIndex: 1,
+              top: 12,
+              left: 12,
+              right: 12,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
+              gap: 1,
             }}
           >
-            {anime.rank && (
+            {anime.score && (
               <Chip
                 icon={<Star sx={{ color: '#FFD700 !important' }} />}
-                label={`#${anime.rank}`}
+                label={anime.score}
                 size="small"
                 sx={{
                   bgcolor: 'rgba(0, 0, 0, 0.7)',
                   color: 'white',
+                  fontWeight: 600,
                   backdropFilter: 'blur(4px)',
-                  '& .MuiChip-label': { fontWeight: 600 },
+                  '& .MuiChip-label': { px: 1 },
                 }}
               />
             )}
@@ -92,12 +99,14 @@ const AnimeCard = ({ anime }) => {
                 sx={{
                   bgcolor: 'rgba(0, 0, 0, 0.7)',
                   color: 'white',
+                  fontWeight: 600,
                   backdropFilter: 'blur(4px)',
-                  '& .MuiChip-label': { fontWeight: 600 },
+                  '& .MuiChip-label': { px: 1 },
                 }}
               />
             )}
           </Box>
+
           <Box
             sx={{
               position: 'absolute',
@@ -106,14 +115,13 @@ const AnimeCard = ({ anime }) => {
               right: 0,
               p: 2,
               background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-              zIndex: 1,
             }}
           >
             <Typography
               variant="subtitle1"
               sx={{
                 color: 'white',
-                fontWeight: 600,
+                fontWeight: 700,
                 textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -121,35 +129,27 @@ const AnimeCard = ({ anime }) => {
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 minHeight: '2.5em',
-                mb: 1,
+                lineHeight: 1.3,
+                letterSpacing: '0.01em',
               }}
             >
               {anime.title}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Rating
-                value={anime.score / 2}
-                precision={0.5}
-                size="small"
-                readOnly
-                sx={{ 
-                  color: 'primary.main',
-                  '& .MuiRating-icon': {
-                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
-                  },
-                }}
-              />
+
+            {anime.type && (
               <Typography
-                variant="body2"
+                variant="caption"
                 sx={{
-                  color: 'white',
-                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.8)',
+                  display: 'block',
+                  mt: 0.5,
+                  fontWeight: 500,
                   textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                 }}
               >
-                {anime.score}
+                {anime.type}
               </Typography>
-            </Box>
+            )}
           </Box>
         </Box>
       </CardActionArea>

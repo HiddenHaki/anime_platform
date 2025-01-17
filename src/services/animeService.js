@@ -14,6 +14,18 @@ const handleResponse = async (response) => {
   return data.data || [];
 };
 
+const getSchedule = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/schedules`);
+    if (!response.ok) throw new Error('Failed to fetch schedule');
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error in getSchedule:', error);
+    throw error;
+  }
+};
+
 export const animeService = {
   // Get latest anime news
   async getLatestNews(page = 1) {
@@ -121,32 +133,6 @@ export const animeService = {
     }
   },
 
-  // Get seasonal anime schedule
-  async getSeasonalSchedule() {
-    try {
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      let season = 'winter';
-      
-      if (month >= 3 && month < 6) season = 'spring';
-      else if (month >= 6 && month < 9) season = 'summer';
-      else if (month >= 9 && month < 12) season = 'fall';
-
-      const response = await fetch(`${BASE_URL}/seasons/${year}/${season}`);
-      const data = await handleResponse(response);
-      if (!data) {
-        await delay(1000);
-        const retryResponse = await fetch(`${BASE_URL}/seasons/${year}/${season}`);
-        return await handleResponse(retryResponse);
-      }
-      return data;
-    } catch (error) {
-      console.error('Error fetching seasonal schedule:', error);
-      throw error;
-    }
-  },
-
   // Search anime
   async searchAnime(query, page = 1) {
     try {
@@ -200,5 +186,7 @@ export const animeService = {
       console.error('Error fetching reviews:', error);
       throw error;
     }
-  }
+  },
+
+  getSchedule,
 }; 

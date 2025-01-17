@@ -34,7 +34,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const navigation = [
   { name: 'Trending', href: '/trending', icon: <TrendingUp /> },
-  { name: 'Seasonal', href: '/seasonal', icon: <CalendarMonth /> },
+  { name: 'Schedule', href: '/schedule', icon: <CalendarMonth /> },
+  { name: 'Search', href: '/search', icon: <SearchIcon /> },
 ];
 
 const Header = ({ toggleTheme, mode }) => {
@@ -83,12 +84,7 @@ const Header = ({ toggleTheme, mode }) => {
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{
-                display: { sm: 'none' },
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-              }}
+              sx={{ display: { sm: 'none' } }}
             >
               <MenuIcon />
             </IconButton>
@@ -106,17 +102,10 @@ const Header = ({ toggleTheme, mode }) => {
                 alignItems: 'center',
                 gap: 1,
                 transition: 'opacity 0.2s',
-                '&:hover': {
-                  opacity: 0.8,
-                },
+                '&:hover': { opacity: 0.8 },
               }}
             >
-              <Movie
-                sx={{
-                  fontSize: 32,
-                  color: theme.palette.primary.main,
-                }}
-              />
+              <Movie sx={{ fontSize: 32, color: 'primary.main' }} />
               <Box
                 component="span"
                 sx={{
@@ -129,7 +118,7 @@ const Header = ({ toggleTheme, mode }) => {
               </Box>
             </Typography>
 
-            <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1 }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
               {navigation.map((item) => (
                 <Button
                   key={item.name}
@@ -153,58 +142,86 @@ const Header = ({ toggleTheme, mode }) => {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 'auto' }}>
             <Box
               component="form"
               onSubmit={handleSearch}
               sx={{
                 position: 'relative',
-                borderRadius: '100px',
-                bgcolor: (theme) => alpha(theme.palette.action.active, 0.05),
-                border: '2px solid',
-                borderColor: (theme) => searchFocused
-                  ? theme.palette.primary.main
-                  : alpha(theme.palette.divider, 0.1),
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  bgcolor: (theme) => alpha(theme.palette.action.active, 0.1),
-                },
+                display: { xs: 'none', sm: 'block' },
               }}
             >
-              <IconButton
-                type="submit"
+              <Box
                 sx={{
-                  p: '8px',
-                  position: 'absolute',
-                  right: '2px',
-                  color: searchFocused ? 'primary.main' : 'action.active',
-                  transition: 'color 0.2s ease-in-out',
-                }}
-                aria-label="search"
-              >
-                <SearchIcon />
-              </IconButton>
-              <InputBase
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                placeholder="Search anime..."
-                sx={{
-                  ml: 2,
-                  flex: 1,
-                  '& input': {
-                    py: 1,
-                    pr: 5,
-                    width: { xs: '140px', sm: '200px' },
-                    transition: 'width 0.2s ease-in-out',
-                    '&:focus': {
-                      width: { xs: '180px', sm: '300px' },
-                    },
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: '100px',
+                  bgcolor: (theme) => alpha(theme.palette.background.paper, mode === 'dark' ? 0.4 : 0.6),
+                  border: '1px solid',
+                  borderColor: (theme) => searchFocused
+                    ? theme.palette.primary.main
+                    : alpha(theme.palette.divider, 0.1),
+                  boxShadow: (theme) => searchFocused 
+                    ? `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                    : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    bgcolor: (theme) => alpha(theme.palette.background.paper, mode === 'dark' ? 0.5 : 0.8),
+                    borderColor: (theme) => alpha(theme.palette.primary.main, 0.5),
+                    boxShadow: (theme) => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
                   },
                 }}
-              />
+              >
+                <InputBase
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  placeholder="Search anime..."
+                  sx={{
+                    ml: 2,
+                    width: searchFocused ? { sm: '240px', md: '300px' } : { sm: '180px', md: '200px' },
+                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '& input': {
+                      py: 1,
+                      pr: 5,
+                      fontSize: '0.95rem',
+                      '&::placeholder': {
+                        color: 'text.secondary',
+                        opacity: 0.8,
+                      },
+                    },
+                  }}
+                />
+                <IconButton
+                  type="submit"
+                  sx={{
+                    p: '8px',
+                    color: searchFocused ? 'primary.main' : 'text.secondary',
+                    transition: 'color 0.2s ease-in-out',
+                    '&:hover': {
+                      color: 'primary.main',
+                    },
+                  }}
+                  aria-label="search"
+                >
+                  <SearchIcon />
+                </IconButton>
+              </Box>
             </Box>
+
+            <IconButton
+              sx={{
+                display: { sm: 'none' },
+                p: '8px',
+                bgcolor: (theme) => alpha(theme.palette.action.active, 0.05),
+                border: '2px solid',
+                borderColor: (theme) => alpha(theme.palette.divider, 0.1),
+              }}
+              onClick={() => navigate('/search')}
+            >
+              <SearchIcon />
+            </IconButton>
 
             <Tooltip title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
               <IconButton
@@ -231,9 +248,7 @@ const Header = ({ toggleTheme, mode }) => {
         anchor="left"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{
-          keepMounted: true,
-        }}
+        ModalProps={{ keepMounted: true }}
         PaperProps={{
           sx: {
             width: 280,
