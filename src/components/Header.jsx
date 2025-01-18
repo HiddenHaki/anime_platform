@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Box,
@@ -8,7 +8,6 @@ import {
   IconButton,
   Typography,
   Container,
-  InputBase,
   useTheme,
   alpha,
   Button,
@@ -22,224 +21,266 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Search as SearchIcon,
-  Brightness4,
-  Brightness7,
+  DarkMode,
+  LightMode,
   TrendingUp,
-  CalendarMonth,
-  Movie,
-  Close,
+  CalendarToday,
+  Home,
 } from '@mui/icons-material';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import SearchBar from './SearchBar';
 
 const navigation = [
-  { name: 'Trending', href: '/trending', icon: <TrendingUp /> },
-  { name: 'Schedule', href: '/schedule', icon: <CalendarMonth /> },
-  { name: 'Search', href: '/search', icon: <SearchIcon /> },
+  { name: 'Home', href: '/', icon: Home },
+  { name: 'Trending', href: '/trending', icon: TrendingUp },
+  { name: 'Seasonal', href: '/seasonal', icon: CalendarToday },
 ];
 
 const Header = ({ toggleTheme, mode }) => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-    }
-  };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  return (
-    <AppBar
-      position="sticky"
-      elevation={0}
-      sx={{
-        bgcolor: (theme) => alpha(theme.palette.background.default, mode === 'dark' ? 0.8 : 0.9),
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid',
-        borderColor: (theme) => alpha(theme.palette.divider, 0.1),
-      }}
-    >
-      <Container maxWidth="lg">
-        <Toolbar
-          sx={{
-            justifyContent: 'space-between',
-            px: { xs: 1, sm: 2 },
-            py: 1,
-            gap: 2,
-          }}
+  const drawer = (
+    <Box sx={{ width: 280 }}>
+      <Box
+        sx={{
+          p: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 3 } }}>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ display: { sm: 'none' } }}
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to="/"
+            onClick={() => setMobileOpen(false)}
+            sx={{
+              color: 'primary.main',
+              textDecoration: 'none',
+              fontWeight: 700,
+              background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            AnimeInfo
+          </Typography>
+        </motion.div>
+      </Box>
+      <Divider sx={{ mb: 2 }} />
+      <List sx={{ px: 2 }}>
+        {navigation.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <motion.div
+              key={item.name}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-              <MenuIcon />
-            </IconButton>
-
-            <Typography
-              variant="h6"
-              component={Link}
-              to="/"
-              sx={{
-                fontWeight: 800,
-                letterSpacing: '-0.5px',
-                textDecoration: 'none',
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                transition: 'opacity 0.2s',
-                '&:hover': { opacity: 0.8 },
-              }}
-            >
-              <Movie sx={{ fontSize: 32, color: 'primary.main' }} />
-              <Box
-                component="span"
+              <ListItem
+                component={RouterLink}
+                to={item.href}
+                onClick={() => setMobileOpen(false)}
+                selected={location.pathname === item.href}
                 sx={{
-                  background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  borderRadius: 2,
+                  mb: 1,
+                  transition: 'all 0.3s',
+                  '&.Mui-selected': {
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                    '&:hover': {
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
+                    },
+                  },
+                  '&:hover': {
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
+                  },
                 }}
               >
-                AnimeInfo
-              </Box>
-            </Typography>
-
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-              {navigation.map((item) => (
-                <Button
-                  key={item.name}
-                  component={Link}
-                  to={item.href}
-                  startIcon={item.icon}
+                <ListItemIcon>
+                  <Icon
+                    sx={{
+                      color: location.pathname === item.href
+                        ? 'primary.main'
+                        : 'text.secondary',
+                      transition: 'color 0.3s',
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.name}
                   sx={{
-                    px: 2,
+                    color: location.pathname === item.href
+                      ? 'primary.main'
+                      : 'text.primary',
+                    '& .MuiTypography-root': {
+                      fontWeight: location.pathname === item.href ? 600 : 400,
+                      transition: 'all 0.3s',
+                    },
+                  }}
+                />
+              </ListItem>
+            </motion.div>
+          );
+        })}
+      </List>
+    </Box>
+  );
+
+  return (
+    <AppBar
+      position="fixed"
+      elevation={0}
+      sx={{
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: (theme) => theme.zIndex.drawer + 2,
+        bgcolor: (theme) => alpha(theme.palette.background.default, mode === 'dark' ? 0.85 : 0.75),
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid',
+        borderColor: (theme) => alpha(theme.palette.divider, 0.08),
+        boxShadow: (theme) => `0 4px 30px ${alpha(theme.palette.common.black, 0.1)}`,
+      }}
+    >
+      <Container maxWidth="xl">
+        <Toolbar
+          sx={{
+            py: { xs: 1, md: 1.5 },
+            gap: { xs: 1, sm: 2 },
+            minHeight: { xs: 64, sm: 70, md: 80 },
+          }}
+        >
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ 
+              display: { sm: 'none' },
+              transition: 'transform 0.2s',
+              '&:active': {
+                transform: 'scale(0.95)',
+              },
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to="/"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                fontWeight: 700,
+                display: { xs: 'none', sm: 'block' },
+                background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  opacity: 0.9,
+                },
+              }}
+            >
+              AnimeInfo
+            </Typography>
+          </motion.div>
+
+          <Box
+            sx={{
+              display: { xs: 'none', sm: 'flex' },
+              gap: { sm: 1, md: 2 },
+              ml: { sm: 2, md: 4 },
+            }}
+          >
+            {navigation.map((item, index) => (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Button
+                  component={RouterLink}
+                  to={item.href}
+                  startIcon={<item.icon />}
+                  sx={{
+                    color: location.pathname === item.href
+                      ? 'primary.main'
+                      : 'text.secondary',
+                    px: { sm: 1.5, md: 2 },
                     py: 1,
-                    borderRadius: '100px',
-                    color: location.pathname === item.href ? 'primary.main' : 'text.primary',
-                    bgcolor: location.pathname === item.href ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                    borderRadius: 2,
+                    transition: 'all 0.3s',
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.primary.main, location.pathname === item.href ? 0.15 : 0.08),
+                      color: 'primary.main',
+                      transform: 'translateY(-2px)',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
                     },
                   }}
                 >
                   {item.name}
                 </Button>
-              ))}
-            </Box>
+              </motion.div>
+            ))}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 'auto' }}>
-            <Box
-              component="form"
-              onSubmit={handleSearch}
-              sx={{
-                position: 'relative',
-                display: { xs: 'none', sm: 'block' },
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  borderRadius: '100px',
-                  bgcolor: (theme) => alpha(theme.palette.background.paper, mode === 'dark' ? 0.4 : 0.6),
-                  border: '1px solid',
-                  borderColor: (theme) => searchFocused
-                    ? theme.palette.primary.main
-                    : alpha(theme.palette.divider, 0.1),
-                  boxShadow: (theme) => searchFocused 
-                    ? `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
-                    : 'none',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&:hover': {
-                    bgcolor: (theme) => alpha(theme.palette.background.paper, mode === 'dark' ? 0.5 : 0.8),
-                    borderColor: (theme) => alpha(theme.palette.primary.main, 0.5),
-                    boxShadow: (theme) => `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
-                  },
-                }}
-              >
-                <InputBase
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
-                  placeholder="Search anime..."
-                  sx={{
-                    ml: 2,
-                    width: searchFocused ? { sm: '240px', md: '300px' } : { sm: '180px', md: '200px' },
-                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '& input': {
-                      py: 1,
-                      pr: 5,
-                      fontSize: '0.95rem',
-                      '&::placeholder': {
-                        color: 'text.secondary',
-                        opacity: 0.8,
-                      },
-                    },
-                  }}
-                />
-                <IconButton
-                  type="submit"
-                  sx={{
-                    p: '8px',
-                    color: searchFocused ? 'primary.main' : 'text.secondary',
-                    transition: 'color 0.2s ease-in-out',
-                    '&:hover': {
-                      color: 'primary.main',
-                    },
-                  }}
-                  aria-label="search"
-                >
-                  <SearchIcon />
-                </IconButton>
-              </Box>
-            </Box>
+          <Box 
+            sx={{ 
+              flex: 1, 
+              display: 'flex', 
+              justifyContent: 'center',
+              px: { xs: 1, sm: 2, md: 4 },
+            }}
+          >
+            <SearchBar />
+          </Box>
 
-            <IconButton
-              sx={{
-                display: { sm: 'none' },
-                p: '8px',
-                bgcolor: (theme) => alpha(theme.palette.action.active, 0.05),
-                border: '2px solid',
-                borderColor: (theme) => alpha(theme.palette.divider, 0.1),
-              }}
-              onClick={() => navigate('/search')}
-            >
-              <SearchIcon />
-            </IconButton>
-
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <Tooltip title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
               <IconButton
                 onClick={toggleTheme}
                 sx={{
-                  p: '8px',
-                  bgcolor: (theme) => alpha(theme.palette.action.active, 0.05),
-                  border: '2px solid',
-                  borderColor: (theme) => alpha(theme.palette.divider, 0.1),
+                  color: 'primary.main',
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                  backdropFilter: 'blur(12px)',
+                  transition: 'all 0.3s',
                   '&:hover': {
-                    bgcolor: (theme) => alpha(theme.palette.action.active, 0.1),
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.15),
+                    transform: 'rotate(180deg)',
                   },
                 }}
               >
-                {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                {mode === 'dark' ? <LightMode /> : <DarkMode />}
               </IconButton>
             </Tooltip>
-          </Box>
+          </motion.div>
         </Toolbar>
       </Container>
 
@@ -248,69 +289,28 @@ const Header = ({ toggleTheme, mode }) => {
         anchor="left"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }}
+        ModalProps={{
+          keepMounted: true,
+        }}
         PaperProps={{
           sx: {
             width: 280,
-            bgcolor: 'background.default',
+            bgcolor: (theme) => alpha(theme.palette.background.default, 0.95),
+            backdropFilter: 'blur(12px)',
+            backgroundImage: 'none',
             borderRight: '1px solid',
-            borderColor: 'divider',
+            borderColor: (theme) => alpha(theme.palette.divider, 0.08),
+          },
+        }}
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: 280,
           },
         }}
       >
-        <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Menu
-          </Typography>
-          <IconButton
-            onClick={handleDrawerToggle}
-            sx={{
-              '&:hover': {
-                bgcolor: 'action.hover',
-              },
-            }}
-          >
-            <Close />
-          </IconButton>
-        </Box>
-        <Divider sx={{ borderColor: 'divider' }} />
-        <List sx={{ p: 2 }}>
-          {navigation.map((item) => (
-            <ListItem
-              key={item.name}
-              component={Link}
-              to={item.href}
-              onClick={handleDrawerToggle}
-              sx={{
-                borderRadius: 2,
-                mb: 1,
-                color: location.pathname === item.href ? 'primary.main' : 'text.primary',
-                bgcolor: location.pathname === item.href ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, location.pathname === item.href ? 0.15 : 0.08),
-                },
-              }}
-            >
-              <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.name}
-                primaryTypographyProps={{
-                  fontWeight: location.pathname === item.href ? 600 : 400,
-                }}
-              />
-            </ListItem>
-          ))}
-        </List>
+        {drawer}
       </Drawer>
     </AppBar>
   );
